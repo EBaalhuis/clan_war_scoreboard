@@ -23,11 +23,13 @@
                         <tbody>
                             {% for row in rows[1:] %}
                                 <tr>
-                                    <td><p class="text-right">{{ row[0] }}</p></td>
-                                    <td><p class="text-right">{{ row[1] }}</p></td>
-                                    <td><p class="text-center">{{ row[2] }}</p></td>
-                                    <td><p class="text-left">{{ row[3] }}</p></td>
-                                    <td><p class="text-left">{{ row[4] }}</p></td>
+                                    <td style="text-align: right; font-weight: normal;"><a href="{{ row[5] }}" target="_blank">{{ row[0] }}</a>
+                                        <br><small><i>{{ row[7] }}</i></small></td>
+                                    <td style="text-align: right; font-weight: normal;">{{ row[1] }}</td>
+                                    <td style="text-align: center; font-weight: normal;">{{ row[2] }}</td>
+                                    <td style="text-align: left; font-weight: normal;">{{ row[3] }}</td>
+                                   <td style="text-align: left; font-weight: normal;"><a href="{{ row[6] }}" target="_blank">{{ row[4] }}</a>
+                                       <br><small><i>{{ row[8] }}</i></small></td>
                                 </tr>
                             {% endfor %}
                         </tbody>

@@ -11,6 +11,8 @@ class Player:
         self.name = name
         self.team = team
         self.discord = ""
+        self.decklist = ""
+        self.clan = ""
         self.opponents = []
         self.results = []
 
@@ -93,6 +95,27 @@ def add_discord_names(players):
                 [p for p in players if p.name.lower() == name][0].discord = discord
 
 
+def process_decklist_string(string):
+    result = string[29:]  # remove google redirect part at the start
+    result = result[:result.find("&sa=")]  # remove google redirect part at the end
+    result = result.replace("%3D", "=").replace("%26", "&")  # replace symbols that don't copy well
+    return result
+
+
+def add_decklists(players):
+    with open("name-deck.csv", mode='r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            discord = row[0].split('#')[0].lower().strip()
+            clan = row[1]
+            decklist = process_decklist_string(row[2])
+            if len([p for p in players if p.discord.lower() == discord]) == 0:
+                print("Discord handle not found in players: ", discord)
+            else:
+                [p for p in players if p.discord.lower() == discord][0].decklist = decklist
+                [p for p in players if p.discord.lower() == discord][0].clan = clan
+
+
 def generate_table(players, teams, nr_rounds):
     data = []
     for round in reversed(range(nr_rounds)):
@@ -111,7 +134,9 @@ def generate_table(players, teams, nr_rounds):
                     opposing_team = player.opponents[round].team
                     done_teams.add(opposing_team)
                     row = [player.name + " (" + player.discord + ")", player.results[round], "-",
-                           opponent.results[round], opponent.name + " (" + opponent.discord + ")"]
+                           opponent.results[round], opponent.name + " (" + opponent.discord + ")",
+                           player.decklist, opponent.decklist,
+                           player.clan, opponent.clan]
                     rows.append(row)
                     if player.results[round] == "1":
                         total_wins += 1
@@ -132,6 +157,7 @@ def index():
     process_rounds(players)
     nr_rounds = len(players[0].opponents)
     add_discord_names(players)
+    add_decklists(players)
     data = generate_table(players, teams, nr_rounds)
 
     return render_template('index.html', data=data, nr_rounds=nr_rounds)
