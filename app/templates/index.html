@@ -7,21 +7,27 @@
 {% block content %}
     {% for round_data in data %}
         <div class="row">
-            <h3><p class="text-center .display-4">Round {{ nr_rounds - loop.index + 1 }}</p></h3>
+            <h1><p class="text-center .display-4">Round {{ nr_rounds - loop.index + 1 }}</p></h1>
             {% for rows in round_data %}
-                <div class="col-sm-3">
+                <div class="col-sm-6">
                     <table class="table">
                         <thead>
-                            {% for col in rows[0] %}
-                                <th>{{ col }}</th>
-                            {% endfor %}
+                            <tr>
+                                <th><p class="text-right">{{ rows[0][0] }}</p></th>
+                                <th><p class="text-right">{{ rows[0][1] }}</p></th>
+                                <th><p class="text-center">{{ rows[0][2] }}</p></th>
+                                <th><p class="text-left">{{ rows[0][3] }}</p></th>
+                                <th><p class="text-left">{{ rows[0][4] }}</p></th>
+                            </tr>
                         </thead>
                         <tbody>
                             {% for row in rows[1:] %}
                                 <tr>
-                                    {% for col in row %}
-                                        <td>{{ col }}</td>
-                                    {% endfor %}
+                                    <td><p class="text-right">{{ row[0] }}</p></td>
+                                    <td><p class="text-right">{{ row[1] }}</p></td>
+                                    <td><p class="text-center">{{ row[2] }}</p></td>
+                                    <td><p class="text-left">{{ row[3] }}</p></td>
+                                    <td><p class="text-left">{{ row[4] }}</p></td>
                                 </tr>
                             {% endfor %}
                         </tbody>

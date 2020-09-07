@@ -1,6 +1,7 @@
 from flask import render_template
 from app import app
 import requests
+import csv
 from bs4 import BeautifulSoup
 TOURNAMENT_ID = "5505"
 
@@ -9,6 +10,7 @@ class Player:
     def __init__(self, name, team):
         self.name = name
         self.team = team
+        self.discord = ""
         self.opponents = []
         self.results = []
 
@@ -79,14 +81,19 @@ def get_teams(players):
     return teams
 
 
-@app.route('/')
-@app.route('/index')
-def index():
-    players = get_players()
-    teams = get_teams(players)
-    process_rounds(players)
-    nr_rounds = len(players[0].opponents)
+def add_discord_names(players):
+    with open("name-discord.csv", mode='r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            name = row[0].lower()
+            discord = row[1]
+            if len([p for p in players if p.name.lower() == name]) == 0:
+                print("Name not found in LP: ", name)
+            else:
+                [p for p in players if p.name.lower() == name][0].discord = discord
 
+
+def generate_table(players, teams, nr_rounds):
     data = []
     for round in reversed(range(nr_rounds)):
         done_teams = set()
@@ -100,10 +107,11 @@ def index():
             total_losses = 0
             for player in players:
                 if player.team == team:
+                    opponent = player.opponents[round]
                     opposing_team = player.opponents[round].team
                     done_teams.add(opposing_team)
-                    row = [player.name, player.results[round], "-",
-                           player.opponents[round].results[round], player.opponents[round].name]
+                    row = [player.name + " (" + player.discord + ")", player.results[round], "-",
+                           opponent.results[round], opponent.name + " (" + opponent.discord + ")"]
                     rows.append(row)
                     if player.results[round] == "1":
                         total_wins += 1
@@ -113,4 +121,17 @@ def index():
             rows.insert(0, header_row)
             round_data.append(rows)
         data.append(round_data)
+    return data
+
+
+@app.route('/')
+@app.route('/index')
+def index():
+    players = get_players()
+    teams = get_teams(players)
+    process_rounds(players)
+    nr_rounds = len(players[0].opponents)
+    add_discord_names(players)
+    data = generate_table(players, teams, nr_rounds)
+
     return render_template('index.html', data=data, nr_rounds=nr_rounds)
