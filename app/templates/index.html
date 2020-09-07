@@ -1,0 +1,33 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block title %}
+    Clan War scoreboard
+{% endblock %}
+
+{% block content %}
+    {% for round_data in data %}
+        <div class="row">
+            <h3><p class="text-center .display-4">Round {{ nr_rounds - loop.index + 1 }}</p></h3>
+            {% for rows in round_data %}
+                <div class="col-sm-3">
+                    <table class="table">
+                        <thead>
+                            {% for col in rows[0] %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+                        </thead>
+                        <tbody>
+                            {% for row in rows[1:] %}
+                                <tr>
+                                    {% for col in row %}
+                                        <td>{{ col }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% endblock %}
