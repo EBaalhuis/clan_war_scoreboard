@@ -149,6 +149,23 @@ def generate_table(players, teams, nr_rounds):
     return data
 
 
+def get_summary(players, teams):
+    wins = {}
+    played = {}
+    for team in teams:
+        wins[team] = 0
+        played[team] = 0
+
+    for player in players:
+        for res in player.results:
+            if res != "?":
+                played[player.team] += 1
+            if res == "1":
+                wins[player.team] += 1
+
+    return sorted([[team, wins[team], played[team]] for team in teams], key=lambda x: -x[1])
+
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -159,5 +176,6 @@ def index():
     add_discord_names(players)
     add_decklists(players)
     data = generate_table(players, teams, nr_rounds)
+    summary = get_summary(players, teams)
 
-    return render_template('index.html', data=data, nr_rounds=nr_rounds)
+    return render_template('index.html', data=data, nr_rounds=nr_rounds, summary=summary)

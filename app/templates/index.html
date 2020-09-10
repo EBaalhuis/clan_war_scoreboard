@@ -5,6 +5,28 @@
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <h1><p class="text-center .display-4">Summary</p></h1>
+        <div class="col-sm-4 col-sm-offset-4">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Wins (played)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in summary %}
+                        <tr>
+                            <td>{{ row[0] }}</td>
+                            <td>{{ row[1] }} ({{ row[2] }})</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% for round_data in data %}
         <div class="row">
             <h1><p class="text-center .display-4">Round {{ nr_rounds - loop.index + 1 }}</p></h1>
@@ -38,4 +60,5 @@
             {% endfor %}
         </div>
     {% endfor %}
+</div>
 {% endblock %}
