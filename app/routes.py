@@ -56,8 +56,8 @@ def process_rounds(players):
                 player1_name = cols[1].split('\n')[0]
                 player2_name = cols[3].split('\n')[0]
                 result = cols[2]
-                player1 = [p for p in players if p.name == player1_name][0]
-                player2 = [p for p in players if p.name == player2_name][0]
+                player1 = [p for p in players if p.name.lower() == player1_name.lower()][0]
+                player2 = [p for p in players if p.name.lower() == player2_name.lower()][0]
 
                 player1.opponents.append(player2)
                 player2.opponents.append(player1)
@@ -87,12 +87,12 @@ def add_discord_names(players):
     with open("name-discord.csv", mode='r') as file:
         reader = csv.reader(file)
         for row in reader:
-            name = row[0].lower()
+            csv_name = row[0]
             discord = row[1]
-            if len([p for p in players if p.name.lower() == name]) == 0:
-                print("Name not found in LP: ", name)
+            if len([p for p in players if p.name.lower() == csv_name.lower()]) == 0:
+                print("Name not found in LP: ", csv_name)
             else:
-                [p for p in players if p.name.lower() == name][0].discord = discord
+                [p for p in players if p.name.lower() == csv_name.lower()][0].discord = discord
 
 
 def process_decklist_string(string):
