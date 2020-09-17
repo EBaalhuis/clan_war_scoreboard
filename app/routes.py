@@ -163,7 +163,7 @@ def get_summary(players, teams):
             if res == "1":
                 wins[player.team] += 1
 
-    return sorted([[team, wins[team], played[team]] for team in teams], key=lambda x: -x[1])
+    return sorted([[team, wins[team], played[team]] for team in teams], key=lambda x: -x[1]+x[2]/1000)
 
 
 @app.route('/')
