@@ -107,6 +107,7 @@ def add_decklists(players):
         reader = csv.reader(file)
         for row in reader:
             discord = row[0].split('#')[0].lower().strip()
+            discord_with_number = row[0]
             clan = row[1]
             decklist = process_decklist_string(row[2])
             if len([p for p in players if p.discord.lower() == discord]) == 0:
@@ -114,6 +115,7 @@ def add_decklists(players):
             else:
                 [p for p in players if p.discord.lower() == discord][0].decklist = decklist
                 [p for p in players if p.discord.lower() == discord][0].clan = clan
+                [p for p in players if p.discord.lower() == discord][0].discord = discord_with_number
 
 
 def generate_table(players, teams, nr_rounds):
