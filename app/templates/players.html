@@ -1,0 +1,35 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block title %}
+    Clan War scoreboard
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row">
+        {% for team in data %}
+        <div class="col-sm-3">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><p class="text-left">{{ team[0][0] }}</p></th>
+                        <th><p class="text-left">{{ team[0][1] }}</p></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in team[1:] %}
+                        <tr>
+                            <td style="text-align: left; font-weight: normal;"><a href="{{ row[1] }}" target="_blank">{{ row[0] }}</a>
+                                <br><small><i>{{ row[3] }}</i></small></td>
+                            <td style="text-align: left; font-weight: normal;">{{ row[2] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

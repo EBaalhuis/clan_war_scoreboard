@@ -2,6 +2,7 @@ from flask import render_template
 from app import app
 import requests
 import csv
+import time
 from bs4 import BeautifulSoup
 TOURNAMENT_ID = "5505"
 
@@ -168,6 +169,32 @@ def get_summary(players, teams):
     return sorted([[team, wins[team], played[team]] for team in teams], key=lambda x: -x[1]+x[2]/1000)
 
 
+def generate_players_page(players, teams, nr_rounds):
+    data = []
+    for team in teams:
+        rows = []
+        team_wins = 0
+        for player in players:
+            if player.team == team:
+                wins, losses = 0, 0
+                for res in player.results:
+                    if res == "1":
+                        wins += 1
+                    if res == "0":
+                        losses += 1
+                team_wins += wins
+                record = "{}-{}".format(wins, losses)
+                row = [player.name + " (" + player.discord + ")",
+                       player.decklist, record, player.clan]
+                rows.append(row)
+        rows = sorted(rows, key=lambda x: -int(x[2][0]))
+        header_row = [team, team_wins]
+        rows.insert(0, header_row)
+        data.append(rows)
+
+    return data
+
+
 @app.route('/')
 @app.route('/index')
 def index():
@@ -181,3 +208,16 @@ def index():
     summary = get_summary(players, teams)
 
     return render_template('index.html', data=data, nr_rounds=nr_rounds, summary=summary)
+
+
+@app.route('/players')
+def players_page():
+    players = get_players()
+    teams = get_teams(players)
+    process_rounds(players)
+    nr_rounds = len(players[0].opponents)
+    add_discord_names(players)
+    add_decklists(players)
+    data = generate_players_page(players, teams, nr_rounds)
+
+    return render_template('players.html', data=data)
