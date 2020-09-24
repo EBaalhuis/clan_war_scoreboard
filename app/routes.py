@@ -183,11 +183,10 @@ def generate_players_page(players, teams, nr_rounds):
                     if res == "0":
                         losses += 1
                 team_wins += wins
-                record = "{}-{}".format(wins, losses)
                 row = [player.name + " (" + player.discord + ")",
-                       player.decklist, record, player.clan]
+                       player.decklist, wins, losses, player.clan]
                 rows.append(row)
-        rows = sorted(rows, key=lambda x: -int(x[2][0]))
+        rows = sorted(rows, key=lambda x: -int(x[2]) + 0.1 * int(x[3]))
         header_row = [team, team_wins]
         rows.insert(0, header_row)
         data.append(rows)

@@ -5,25 +5,32 @@
 
     <div class="row">
         {% for team in data %}
-        <div class="col-sm-3">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th><p class="text-left">{{ team[0][0] }}</p></th>
-                        <th><p class="text-left">{{ team[0][1] }}</p></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in team[1:] %}
+            <div class="col-sm-3">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td style="text-align: left; font-weight: normal;"><a href="{{ row[1] }}" target="_blank">{{ row[0] }}</a>
-                                <br><small><i>{{ row[3] }}</i></small></td>
-                            <td style="text-align: left; font-weight: normal;">{{ row[2] }}</td>
+                            <th><p class="text-left">{{ team[0][0] }}</p></th>
+                            <th></th>
+                            <th><p class="text-center">{{ team[0][1] }}</p></th>
+                            <th></th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        {% for row in team[1:] %}
+                            <tr>
+                                <td style="text-align: left; font-weight: normal;"><a href="{{ row[1] }}" target="_blank">{{ row[0] }}</a>
+                                    <br><small><i>{{ row[4] }}</i></small></td>
+                                <td style="text-align: right; font-weight: normal; padding: 8px 0px 8px 0px;">{{ row[2] }}</td>
+                                <td style="text-align: center; font-weight: normal; padding: 8px 0px 8px 0px;">-</td>
+                                <td style="text-align: left; font-weight: normal; padding: 8px 0px 8px 0px;">{{ row[3] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if loop.index == 4 %}
+                </div><div class="row">
+            {% endif %}
         {% endfor %}
     </div>
 
