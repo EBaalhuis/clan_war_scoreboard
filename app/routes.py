@@ -104,7 +104,7 @@ def process_decklist_string(string):
 
 
 def add_decklists(players):
-    with open("name-deck-pack5.csv", mode='r') as file:
+    with open("name-deck-pack6.csv", mode='r') as file:
         reader = csv.reader(file)
         for row in reader:
             discord = row[0].split('#')[0].lower().strip()
