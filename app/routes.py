@@ -62,10 +62,10 @@ def process_rounds(players):
 
                 player1.opponents.append(player2)
                 player2.opponents.append(player1)
-                if result == '10 – 1':
+                if result == '10 – 1' or result == '10 – 0':  # watch out: the dash is not a minus
                     player1.results.append("1")
                     player2.results.append("0")
-                elif result == '1 – 10':
+                elif result == '1 – 10' or result == '0 – 10':  # watch out: the dash is not a minus
                     player1.results.append("0")
                     player2.results.append("1")
                 else:
