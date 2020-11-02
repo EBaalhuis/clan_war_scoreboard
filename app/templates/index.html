@@ -23,9 +23,9 @@
             </table>
         </div>
     </div>
-    {% for round_data in data %}
+    {% for round_data in swiss_data %}
         <div class="row">
-            <h1><p class="text-center .display-4">Round {{ nr_rounds - loop.index + 1 }}</p></h1>
+            <h1><p class="text-center .display-4">Round {{ nr_rounds_swiss - loop.index + 1 }}</p></h1>
             {% for rows in round_data %}
                 <div class="col-sm-6">
                     <table class="table">

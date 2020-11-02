@@ -4,7 +4,10 @@ import requests
 import csv
 import time
 from bs4 import BeautifulSoup
+
 TOURNAMENT_ID = "5505"
+SWISS_TABLES = 84
+SWISS_ROUNDS = 7
 
 
 class Player:
@@ -41,6 +44,13 @@ def get_players():
         print("error requesting scoreboard page from LP")
 
 
+def find_player_by_name(players, name):
+    if name == "BYE":
+        return Player(name, "BYE_TEAM")
+    else:
+        return [p for p in players if p.name.lower() == name.lower()][0]
+
+
 def process_rounds(players):
     url = "https://thelotuspavilion.com/tournaments/" + TOURNAMENT_ID + "/games"
     response = requests.get(url)
@@ -51,14 +61,15 @@ def process_rounds(players):
         rounds = table.find_all('tbody')
         for round in reversed(rounds):
             rows = round.find_all('tr')
+
             for row in rows:
                 cols = row.find_all('td')
                 cols = [ele.text.strip() for ele in cols]
                 player1_name = cols[1].split('\n')[0]
                 player2_name = cols[3].split('\n')[0]
                 result = cols[2]
-                player1 = [p for p in players if p.name.lower() == player1_name.lower()][0]
-                player2 = [p for p in players if p.name.lower() == player2_name.lower()][0]
+                player1 = find_player_by_name(players, player1_name)
+                player2 = find_player_by_name(players, player2_name)
 
                 player1.opponents.append(player2)
                 player2.opponents.append(player1)
@@ -119,7 +130,7 @@ def add_decklists(players):
                 [p for p in players if p.discord.lower() == discord][0].discord = discord_with_number
 
 
-def generate_table(players, teams, nr_rounds):
+def generate_swiss_table(players, teams, nr_rounds):
     data = []
     for round in reversed(range(nr_rounds)):
         done_teams = set()
@@ -150,6 +161,15 @@ def generate_table(players, teams, nr_rounds):
             round_data.append(rows)
         data.append(round_data)
     return data
+
+
+def generate_cut_table(players, nr_rounds):
+    data = []
+    for round in reversed(range(nr_rounds)):
+        round_data = []
+        for player in players:
+            if len(player.opponents) == SWISS_ROUNDS:  # player did not make the cut
+                continue
 
 
 def get_summary(players, teams):
@@ -200,13 +220,13 @@ def index():
     players = get_players()
     teams = get_teams(players)
     process_rounds(players)
-    nr_rounds = len(players[0].opponents)
+    nr_rounds_swiss = min([len(p.opponents) for p in players])
     add_discord_names(players)
     add_decklists(players)
-    data = generate_table(players, teams, nr_rounds)
+    swiss_data = generate_swiss_table(players, teams, nr_rounds_swiss)
     summary = get_summary(players, teams)
 
-    return render_template('index.html', data=data, nr_rounds=nr_rounds, summary=summary)
+    return render_template('index.html', swiss_data=swiss_data, nr_rounds_swiss=nr_rounds_swiss, summary=summary)
 
 
 @app.route('/players')
