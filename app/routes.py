@@ -167,9 +167,32 @@ def generate_cut_table(players, nr_rounds):
     data = []
     for round in reversed(range(nr_rounds)):
         round_data = []
+        players_done = []
         for player in players:
-            if len(player.opponents) == SWISS_ROUNDS:  # player did not make the cut
+            if len(player.opponents) <= SWISS_ROUNDS + round:  # player did not make it to this round
                 continue
+            if player in players_done:
+                continue
+            players_done.append(player)
+
+            cut_round = round + SWISS_ROUNDS
+            opponent = player.opponents[cut_round]
+            if opponent.name == "BYE":
+                row = [player.name + " (" + player.discord + ")", player.results[cut_round], "-",
+                       0, opponent.name,
+                       player.decklist, "",
+                       player.clan, "",
+                       player.team, ""]
+            else:
+                players_done.append(opponent)
+                row = [player.name + " (" + player.discord + ")", player.results[cut_round], "-",
+                       opponent.results[cut_round], opponent.name + " (" + opponent.discord + ")",
+                       player.decklist, opponent.decklist,
+                       player.clan, opponent.clan,
+                       player.team, opponent.team]
+            round_data.append(row)
+        data.append(round_data)
+    return data
 
 
 def get_summary(players, teams):
@@ -221,12 +244,15 @@ def index():
     teams = get_teams(players)
     process_rounds(players)
     nr_rounds_swiss = min([len(p.opponents) for p in players])
+    nr_rounds_cut = max(max([len(p.opponents) for p in players]) - SWISS_ROUNDS, 0)
     add_discord_names(players)
     add_decklists(players)
     swiss_data = generate_swiss_table(players, teams, nr_rounds_swiss)
+    cut_data = generate_cut_table(players, nr_rounds_cut)
     summary = get_summary(players, teams)
 
-    return render_template('index.html', swiss_data=swiss_data, nr_rounds_swiss=nr_rounds_swiss, summary=summary)
+    return render_template('index.html', swiss_data=swiss_data, cut_data=cut_data, nr_rounds_swiss=nr_rounds_swiss,
+                           nr_rounds_cut=nr_rounds_cut, summary=summary, round_size=[64, 32, 16, 8, 4, 2])
 
 
 @app.route('/players')

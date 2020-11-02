@@ -23,6 +23,28 @@
             </table>
         </div>
     </div>
+    {% for rows in cut_data %}
+        <div class="row">
+            <h1><p class="text-center .display-4">Top {{ round_size[nr_rounds_cut - loop.index] }}</p></h1>
+            <div class="col-sm-12">
+                <table class="table">
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td style="text-align: right; font-weight: normal;"><a href="{{ row[5] }}" target="_blank">{{ row[0] }}</a>
+                                    <br><small><i>{{ row[9] }} - {{ row[7] }}</i></small></td>
+                                <td style="text-align: right; font-weight: normal;">{{ row[1] }}</td>
+                                <td style="text-align: center; font-weight: normal;">{{ row[2] }}</td>
+                                <td style="text-align: left; font-weight: normal;">{{ row[3] }}</td>
+                               <td style="text-align: left; font-weight: normal;"><a href="{{ row[6] }}" target="_blank">{{ row[4] }}</a>
+                                   <br><small><i>{{ row[10] }} - {{ row[8] }}</i></small></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endfor %}
     {% for round_data in swiss_data %}
         <div class="row">
             <h1><p class="text-center .display-4">Round {{ nr_rounds_swiss - loop.index + 1 }}</p></h1>
