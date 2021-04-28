@@ -5,9 +5,9 @@ import csv
 import time
 from bs4 import BeautifulSoup
 
-TOURNAMENT_ID = "5505"
-SWISS_TABLES = 84
-SWISS_ROUNDS = 7
+TOURNAMENT_ID = "5676"
+SWISS_TABLES = 54
+SWISS_ROUNDS = 5
 
 
 class Player:
@@ -96,38 +96,42 @@ def get_teams(players):
 
 
 def add_discord_names(players):
-    with open("name-discord.csv", mode='r') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            csv_name = row[0]
-            discord = row[1]
-            if len([p for p in players if p.name.lower() == csv_name.lower()]) == 0:
-                print("Name not found in LP: ", csv_name)
-            else:
-                [p for p in players if p.name.lower() == csv_name.lower()][0].discord = discord
+    # this block was for season 1 when the source spreadsheets were different (had to link name to discord first)
+    # with open("season2-name-discord.csv", mode='r') as file:
+    #     reader = csv.reader(file)
+    #     for row in reader:
+    #         csv_name = row[0]
+    #         discord = row[1]
+    #         if len([p for p in players if p.name.lower() == csv_name.lower()]) == 0:
+    #             print("Name not found in LP: ", csv_name)
+    #         else:
+    #             [p for p in players if p.name.lower() == csv_name.lower()][0].discord = discord
+
+    for p in players:
+        p.discord = p.name
 
 
-def process_decklist_string(string):
-    result = string[29:]  # remove google redirect part at the start
-    result = result[:result.find("&sa=")]  # remove google redirect part at the end
-    result = result.replace("%3D", "=").replace("%26", "&")  # replace symbols that don't copy well
+def process_decklist_string(s):
+    # result = string[29:]  # remove google redirect part at the start -- not used for S2
+    # result = result[:result.find("&sa=")]  # remove google redirect part at the end -- not used for S2
+    result = s.replace("%3D", "=").replace("%26", "&")  # replace symbols that don't copy well
     return result
 
 
 def add_decklists(players):
-    with open("name-deck-pack6.csv", mode='r') as file:
+    with open("season2_name_deck.csv", mode='r') as file:
         reader = csv.reader(file)
         for row in reader:
             discord = row[0].split('#')[0].lower().strip()
             discord_with_number = row[0]
             clan = row[1]
             decklist = process_decklist_string(row[2])
-            if len([p for p in players if p.discord.lower() == discord]) == 0:
+            if len([p for p in players if p.discord.split('#')[0].lower().strip() == discord]) == 0:
                 print("Discord handle not found in players: ", discord)
+                print([p.discord.lower() for p in players])
             else:
-                [p for p in players if p.discord.lower() == discord][0].decklist = decklist
-                [p for p in players if p.discord.lower() == discord][0].clan = clan
-                [p for p in players if p.discord.lower() == discord][0].discord = discord_with_number
+                [p for p in players if p.discord.split('#')[0].lower().strip() == discord][0].decklist = decklist
+                [p for p in players if p.discord.split('#')[0].lower().strip() == discord][0].clan = clan
 
 
 def generate_swiss_table(players, teams, nr_rounds):
@@ -147,8 +151,8 @@ def generate_swiss_table(players, teams, nr_rounds):
                     opponent = player.opponents[round]
                     opposing_team = player.opponents[round].team
                     done_teams.add(opposing_team)
-                    row = [player.name + " (" + player.discord + ")", player.results[round], "-",
-                           opponent.results[round], opponent.name + " (" + opponent.discord + ")",
+                    row = [player.name, player.results[round], "-",
+                           opponent.results[round], opponent.name,
                            player.decklist, opponent.decklist,
                            player.clan, opponent.clan]
                     rows.append(row)
@@ -178,15 +182,15 @@ def generate_cut_table(players, nr_rounds):
             cut_round = round + SWISS_ROUNDS
             opponent = player.opponents[cut_round]
             if opponent.name == "BYE":
-                row = [player.name + " (" + player.discord + ")", player.results[cut_round], "-",
+                row = [player.name, player.results[cut_round], "-",
                        0, opponent.name,
                        player.decklist, "",
                        player.clan, "",
                        player.team, ""]
             else:
                 players_done.append(opponent)
-                row = [player.name + " (" + player.discord + ")", player.results[cut_round], "-",
-                       opponent.results[cut_round], opponent.name + " (" + opponent.discord + ")",
+                row = [player.name, player.results[cut_round], "-",
+                       opponent.results[cut_round], opponent.name,
                        player.decklist, opponent.decklist,
                        player.clan, opponent.clan,
                        player.team, opponent.team]
@@ -226,8 +230,7 @@ def generate_players_page(players, teams, nr_rounds):
                     if res == "0":
                         losses += 1
                 team_wins += wins
-                row = [player.name + " (" + player.discord + ")",
-                       player.decklist, wins, losses, player.clan]
+                row = [player.name, player.decklist, wins, losses, player.clan]
                 rows.append(row)
         rows = sorted(rows, key=lambda x: -int(x[2]) + 0.1 * int(x[3]))
         header_row = [team, team_wins]
@@ -259,7 +262,7 @@ def index():
 def players_page():
     players = get_players()
     teams = get_teams(players)
-    process_rounds(players)
+    # process_rounds(players)
     nr_rounds = len(players[0].opponents)
     add_discord_names(players)
     add_decklists(players)
