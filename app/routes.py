@@ -262,7 +262,7 @@ def index():
 def players_page():
     players = get_players()
     teams = get_teams(players)
-    # process_rounds(players)
+    process_rounds(players)
     nr_rounds = len(players[0].opponents)
     add_discord_names(players)
     add_decklists(players)
