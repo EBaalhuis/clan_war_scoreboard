@@ -26,11 +26,19 @@ def get_players():
     url = "https://thelotuspavilion.com/tournaments/" + TOURNAMENT_ID + "/scores"
     response = requests.get(url)
     if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Ugly way to remove LP drop icon, beautifulsoup cant handle it for some reason.
+        # Maybe because LP gives double </span>
+        fixed_text = response.text.replace('<span class="icon-droplet tooltip drop-color" data-tooltip="This player was dropped<br>from the tournament."></span>\n'
+                    '                    </span>',
+                     "")
+
+        soup = BeautifulSoup(fixed_text, 'html.parser')
         table = soup.find("table", {"class": "fullwidth striped"})
         table_body = table.find('tbody')
 
-        rows = table_body.find_all('tr')
+        rows = table_body.find_all('tr', recursive=False)
+        print(len(rows))
         for row in rows:
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
@@ -48,6 +56,11 @@ def find_player_by_name(players, name):
     if name == "BYE":
         return Player(name, "BYE_TEAM")
     else:
+        if len([p for p in players if p.name.lower() == name.lower()]) == 0:
+            print(name.lower())
+            print("")
+            # print([p.name.lower() for p in players])
+
         return [p for p in players if p.name.lower() == name.lower()][0]
 
 
@@ -213,7 +226,7 @@ def get_summary(players, teams):
             if res == "1":
                 wins[player.team] += 1
 
-    return sorted([[team, wins[team], played[team]] for team in teams], key=lambda x: -x[1]+x[2]/1000)
+    return sorted([[team, wins[team], played[team]] for team in teams], key=lambda x: -x[1] + x[2] / 1000)
 
 
 def generate_players_page(players, teams, nr_rounds):
