@@ -38,7 +38,6 @@ def get_players():
         table_body = table.find('tbody')
 
         rows = table_body.find_all('tr', recursive=False)
-        print(len(rows))
         for row in rows:
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
@@ -56,11 +55,6 @@ def find_player_by_name(players, name):
     if name == "BYE":
         return Player(name, "BYE_TEAM")
     else:
-        if len([p for p in players if p.name.lower() == name.lower()]) == 0:
-            print(name.lower())
-            print("")
-            # print([p.name.lower() for p in players])
-
         return [p for p in players if p.name.lower() == name.lower()][0]
 
 
