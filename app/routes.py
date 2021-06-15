@@ -255,6 +255,8 @@ def index():
     process_rounds(players)
     nr_rounds_swiss = min([len(p.opponents) for p in players])
     nr_rounds_cut = max(max([len(p.opponents) for p in players]) - SWISS_ROUNDS, 0)
+    print("\nnr_rounds_cut")
+    print(nr_rounds_cut)
     add_discord_names(players)
     add_decklists(players)
     swiss_data = generate_swiss_table(players, teams, nr_rounds_swiss)
@@ -262,7 +264,7 @@ def index():
     summary = get_summary(players, teams)
 
     return render_template('index.html', swiss_data=swiss_data, cut_data=cut_data, nr_rounds_swiss=nr_rounds_swiss,
-                           nr_rounds_cut=nr_rounds_cut, summary=summary, round_size=[64, 32, 16, 8, 4, 2])
+                           nr_rounds_cut=nr_rounds_cut, summary=summary, round_size=[32, 16, 8, 4, 2])
 
 
 @app.route('/players')
