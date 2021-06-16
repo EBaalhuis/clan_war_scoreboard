@@ -2,10 +2,10 @@ from flask import render_template
 from app import app
 import requests
 import csv
-import time
 from bs4 import BeautifulSoup
 
 TOURNAMENT_ID = "5676"
+SILVER_ID = "5684"
 SWISS_TABLES = 54
 SWISS_ROUNDS = 5
 
@@ -21,12 +21,11 @@ class Player:
         self.results = []
 
 
-def get_players():
+def get_players(tournament_id):
     players = []
-    url = "https://thelotuspavilion.com/tournaments/" + TOURNAMENT_ID + "/scores"
+    url = "https://thelotuspavilion.com/tournaments/" + tournament_id + "/scores"
     response = requests.get(url)
     if response.status_code == 200:
-
         # Ugly way to remove LP drop icon, beautifulsoup cant handle it for some reason.
         # Maybe because LP gives double </span>
         fixed_text = response.text.replace('<span class="icon-droplet tooltip drop-color" data-tooltip="This player was dropped<br>from the tournament."></span>\n'
@@ -36,15 +35,15 @@ def get_players():
         soup = BeautifulSoup(fixed_text, 'html.parser')
         table = soup.find("table", {"class": "fullwidth striped"})
         table_body = table.find('tbody')
-
         rows = table_body.find_all('tr', recursive=False)
         for row in rows:
             cols = row.find_all('td')
             cols = [ele.text.strip() for ele in cols]
             player = cols[1].split('\n')[0]
+            if player.split(" ")[0] == "BYE":
+                continue
             team = cols[1].split('\n')[1]
             players.append(Player(player, team))
-            # print("Found player {} on team {}".format(player, team))
 
         return players
     else:
@@ -58,8 +57,8 @@ def find_player_by_name(players, name):
         return [p for p in players if p.name.lower() == name.lower()][0]
 
 
-def process_rounds(players):
-    url = "https://thelotuspavilion.com/tournaments/" + TOURNAMENT_ID + "/games"
+def process_rounds(players, tournament_id):
+    url = "https://thelotuspavilion.com/tournaments/" + tournament_id + "/games"
     response = requests.get(url)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -130,12 +129,12 @@ def add_decklists(players):
         reader = csv.reader(file)
         for row in reader:
             discord = row[0].split('#')[0].lower().strip()
-            discord_with_number = row[0]
             clan = row[1]
             decklist = process_decklist_string(row[2])
             if len([p for p in players if p.discord.split('#')[0].lower().strip() == discord]) == 0:
-                print("Discord handle not found in players: ", discord)
-                print([p.discord.lower() for p in players])
+                pass
+                # print("Discord handle not found in players: ", discord)
+                # print([p.discord.lower() for p in players])
             else:
                 [p for p in players if p.discord.split('#')[0].lower().strip() == discord][0].decklist = decklist
                 [p for p in players if p.discord.split('#')[0].lower().strip() == discord][0].clan = clan
@@ -151,44 +150,44 @@ def generate_swiss_table(players, teams, nr_rounds):
                 continue
             rows = []
             done_teams.add(team)
-            total_wins = 0
-            total_losses = 0
-            for player in players:
-                if player.team == team:
-                    opponent = player.opponents[round]
-                    opposing_team = player.opponents[round].team
-                    done_teams.add(opposing_team)
-                    row = [player.name, player.results[round], "-",
-                           opponent.results[round], opponent.name,
-                           player.decklist, opponent.decklist,
-                           player.clan, opponent.clan]
-                    rows.append(row)
-                    if player.results[round] == "1":
-                        total_wins += 1
-                    elif player.results[round] == "0":
-                        total_losses += 1
-            header_row = [team, total_wins, "-", total_losses, opposing_team]
+            team_wins = 0
+            team_losses = 0
+            for player in filter(lambda x: x.team == team, players):
+                opponent = player.opponents[round]
+                opposing_team = player.opponents[round].team
+                done_teams.add(opposing_team)
+                row = [player.name, player.results[round], "-",
+                       opponent.results[round], opponent.name,
+                       player.decklist, opponent.decklist,
+                       player.clan, opponent.clan]
+                rows.append(row)
+
+                if player.results[round] == "1":
+                    team_wins += 1
+                elif player.results[round] == "0":
+                    team_losses += 1
+            header_row = [team, team_wins, "-", team_losses, opposing_team]
             rows.insert(0, header_row)
             round_data.append(rows)
         data.append(round_data)
     return data
 
 
-def generate_cut_table(players, nr_rounds):
+def generate_cut_table(players, nr_rounds, swiss_rounds=SWISS_ROUNDS):
     data = []
     for round in reversed(range(nr_rounds)):
         round_data = []
         players_done = []
         for player in players:
-            if len(player.opponents) <= SWISS_ROUNDS + round:  # player did not make it to this round
+            if len(player.opponents) <= swiss_rounds + round:  # player did not make it to this round
                 continue
             if player in players_done:
                 continue
             players_done.append(player)
 
-            cut_round = round + SWISS_ROUNDS
+            cut_round = round + swiss_rounds
             opponent = player.opponents[cut_round]
-            if opponent.name == "BYE":
+            if opponent.name == "BYE" or opponent.name.split(" ")[0] == "BYE":
                 row = [player.name, player.results[cut_round], "-",
                        0, opponent.name,
                        player.decklist, "",
@@ -206,14 +205,14 @@ def generate_cut_table(players, nr_rounds):
     return data
 
 
-def get_summary(players, teams):
+def get_summary(players, teams, silver_players):
     wins = {}
     played = {}
     for team in teams:
         wins[team] = 0
         played[team] = 0
 
-    for player in players:
+    for player in players + silver_players:
         for res in player.results:
             if res != "?":
                 played[player.team] += 1
@@ -250,28 +249,37 @@ def generate_players_page(players, teams, nr_rounds):
 @app.route('/')
 @app.route('/index')
 def index():
-    players = get_players()
+    players = get_players(TOURNAMENT_ID)
     teams = get_teams(players)
-    process_rounds(players)
+    process_rounds(players, TOURNAMENT_ID)
     nr_rounds_swiss = min([len(p.opponents) for p in players])
     nr_rounds_cut = max(max([len(p.opponents) for p in players]) - SWISS_ROUNDS, 0)
-    print("\nnr_rounds_cut")
-    print(nr_rounds_cut)
     add_discord_names(players)
     add_decklists(players)
     swiss_data = generate_swiss_table(players, teams, nr_rounds_swiss)
     cut_data = generate_cut_table(players, nr_rounds_cut)
-    summary = get_summary(players, teams)
+
+    # Silver cup, that is in a different LP tournament
+    silver_players = get_players(SILVER_ID)
+    process_rounds(silver_players, SILVER_ID)
+    add_discord_names(silver_players)
+    add_decklists(silver_players)
+    nr_rounds_silver_cut = max(max([len(p.opponents) for p in silver_players]), 0)
+    silver_data = generate_cut_table(silver_players, nr_rounds_silver_cut, swiss_rounds=0)
+
+    summary = get_summary(players, teams, silver_players)
 
     return render_template('index.html', swiss_data=swiss_data, cut_data=cut_data, nr_rounds_swiss=nr_rounds_swiss,
-                           nr_rounds_cut=nr_rounds_cut, summary=summary, round_size=[32, 16, 8, 4, 2])
+                           nr_rounds_cut=nr_rounds_cut, summary=summary, round_size=[32, 16, 8, 4, 2],
+                           silver_data=silver_data, nr_rounds_silver_cut=nr_rounds_silver_cut,
+                           silver_rounds=[16, 8, 4, 2])
 
 
 @app.route('/players')
 def players_page():
-    players = get_players()
+    players = get_players(TOURNAMENT_ID)
     teams = get_teams(players)
-    process_rounds(players)
+    process_rounds(players, TOURNAMENT_ID)
     nr_rounds = len(players[0].opponents)
     add_discord_names(players)
     add_decklists(players)
