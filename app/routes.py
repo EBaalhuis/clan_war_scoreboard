@@ -5,7 +5,7 @@ import csv
 from bs4 import BeautifulSoup
 
 TOURNAMENT_ID = "5676"
-SILVER_ID = "5684"
+SILVER_TOURNAMENT_ID = "5684"
 SWISS_TABLES = 54
 SWISS_ROUNDS = 5
 
@@ -210,10 +210,32 @@ def generate_cut_table(players, nr_rounds, swiss_rounds=SWISS_ROUNDS):
 
 
 def get_summary(players, teams, silver_players):
-    wins = {}
+    # Gold cup bonus points
+    gold_bonus = {}
+    for team in teams:
+        gold_bonus[team] = 0
+    for player in players:
+        if len(player.results) >= 10 and player.results[9] == "1":  # won the final
+            gold_bonus[player.team] = 5
+        elif len(player.results) >= 9 and player.results[8] == "1":  # made top 2
+            gold_bonus[player.team] = max(gold_bonus[player.team], 3)
+        elif len(player.results) >= 8 and player.results[7] == "1":  # made top 4
+            gold_bonus[player.team] = max(gold_bonus[player.team], 2)
+        elif len(player.results) >= 7 and player.results[6] == "1":  # made top 8
+            gold_bonus[player.team] = max(gold_bonus[player.team], 1)
+
+    # Silver cup bonus points
+    silver_bonus = {}
+    for team in teams:
+        silver_bonus[team] = 0
+    for player in silver_players:
+        if len(player.results) == 4 and player.results[3] == "1":  # won silver cup
+            silver_bonus[player.team] = 2
+
+    score = {}
     played = {}
     for team in teams:
-        wins[team] = 0
+        score[team] = gold_bonus[team] + silver_bonus[team]
         played[team] = 0
 
     for player in players + silver_players:
@@ -221,9 +243,10 @@ def get_summary(players, teams, silver_players):
             if res != "?":
                 played[player.team] += 1
             if res == "1":
-                wins[player.team] += 1
+                score[player.team] += 1
 
-    return sorted([[team, wins[team], played[team]] for team in teams], key=lambda x: -x[1] + x[2] / 1000)
+    return sorted([[team, score[team], played[team], gold_bonus[team], silver_bonus[team]] for team in teams],
+                  key=lambda x: -x[1] + x[2] / 1000)
 
 
 def generate_players_page(players, teams, nr_rounds):
@@ -267,13 +290,14 @@ def index():
     cut_data = generate_cut_table(players, nr_rounds_cut)
 
     # Silver cup, that is in a different LP tournament
-    silver_players = get_players(SILVER_ID)
-    process_rounds(silver_players, SILVER_ID)
+    silver_players = get_players(SILVER_TOURNAMENT_ID)
+    process_rounds(silver_players, SILVER_TOURNAMENT_ID)
     add_discord_names(silver_players)
     add_decklists(silver_players, cups=True)
     nr_rounds_silver_cut = max(max([len(p.opponents) for p in silver_players]), 0)
     silver_data = generate_cut_table(silver_players, nr_rounds_silver_cut, swiss_rounds=0)
 
+    # Summary at the top of the page
     summary = get_summary(players, teams, silver_players)
 
     return render_template('index.html', swiss_data=swiss_data, cut_data=cut_data, nr_rounds_swiss=nr_rounds_swiss,
