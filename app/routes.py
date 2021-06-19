@@ -124,8 +124,12 @@ def process_decklist_string(s):
     return result
 
 
-def add_decklists(players):
-    with open("season2_name_deck.csv", mode='r') as file:
+def add_decklists(players, cups=False):
+    if cups:
+        file_name = "season2_name_deck_cups.csv"
+    else:
+        file_name = "season2_name_deck.csv"
+    with open(file_name, mode='r') as file:
         reader = csv.reader(file)
         for row in reader:
             discord = row[0].split('#')[0].lower().strip()
@@ -253,17 +257,20 @@ def index():
     teams = get_teams(players)
     process_rounds(players, TOURNAMENT_ID)
     nr_rounds_swiss = min([len(p.opponents) for p in players])
-    nr_rounds_cut = max(max([len(p.opponents) for p in players]) - SWISS_ROUNDS, 0)
     add_discord_names(players)
     add_decklists(players)
     swiss_data = generate_swiss_table(players, teams, nr_rounds_swiss)
+
+    # Gold cup
+    add_decklists(players, cups=True)
+    nr_rounds_cut = max(max([len(p.opponents) for p in players]) - SWISS_ROUNDS, 0)
     cut_data = generate_cut_table(players, nr_rounds_cut)
 
     # Silver cup, that is in a different LP tournament
     silver_players = get_players(SILVER_ID)
     process_rounds(silver_players, SILVER_ID)
     add_discord_names(silver_players)
-    add_decklists(silver_players)
+    add_decklists(silver_players, cups=True)
     nr_rounds_silver_cut = max(max([len(p.opponents) for p in silver_players]), 0)
     silver_data = generate_cut_table(silver_players, nr_rounds_silver_cut, swiss_rounds=0)
 
